@@ -1,25 +1,49 @@
 # NCERT_3B_v0.1
-A 3B parameter, GRPO fine-tuned reasoning model trained on the NCERT dataset (Classes 6-12). Aggressively 4-bit quantized (GGUF) via Unsloth to run 100% offline on low-end 3-6GB RAM edge devices. Built to bridge the digital divide in education.
-# 🥊 NCERT_3B_v0.1 (The "Brawler")
 
-An edge-optimized, GRPO fine-tuned reasoning engine built specifically to run 100% offline on budget smartphones. 
+3B-parameter reasoning model fine-tuned via Group Relative Policy Optimization (GRPO) on structured NCERT Class 6–12 STEM curricula (Physics, Chemistry, Mathematics, and Biology), quantized to GGUF (`2.02 GB`) for offline execution on constrained mobile and consumer hardware.
 
-### 📖 The Story: Bridging the Divide
-This project was born out of a 30-hour sleepless engineering sprint to solve a massive frustration: the digital divide in education. Elite reasoning AI is almost exclusively locked behind expensive cloud APIs or high-end hardware. As an AI engineer navigating the rigors of the Class 12 curriculum—from thermodynamics to matrix operations—I realized that true educational equity means taking elite AI out of the cloud and putting it directly into the pocket of the student. 
+* **Model Weights & GGUF Artefact:** [huggingface.co/Erebus007/NCERT_3B_v0.1](https://huggingface.co/Erebus007/NCERT_3B_v0.1)[cite: 2]
+* **Base Architecture:** `Llama-3.2-3B` (`llama` family, `3B` parameters)[cite: 2]
+* **Fine-Tuning Objective:** Unsloth QLoRA + Group Relative Policy Optimization (GRPO)
+* **Artefact Footprint:** `2.02 GB` (`NCERT_3B_v0.1.gguf`)
 
-The goal wasn't just to build a tutor; it was to build a reasoning engine that could comfortably run on a standard 4GB-6GB RAM mobile phone without internet access.
+---
 
-### ⚙️ The Technical Grind
-To make this a reality, I had to bridge massive cloud hardware with extreme edge constraints:
-1. **The Muscle:** The training pipeline was executed on an **AMD MI300X** utilizing ROCm. 
-2. **The Brain:** Instead of standard instruct-tuning, I utilized **GRPO (Group Relative Policy Optimization) Reinforcement Learning**. The model is heavily penalized if it doesn't think step-by-step. It is forced to generate explicit `<reasoning>` logic before outputting a final `<answer>`, ensuring factual accuracy for complex physics and math problems.
-3. **The Diet:** The base Llama-3.2-3B model was aggressively quantized via **Unsloth** into a 4-bit GGUF format. 
+## Model & Quantization Specification
 
-**The Result:** A 6.1 GB model compressed into a **1.9 GB** footprint that executes natively on an Android device without hallucinating or crashing the OS memory limits. 
+| Parameter / Component | Verified Specification |
+| :--- | :--- |
+| **Repository Identifier** | `Erebus007/NCERT_3B_v0.1` (Verified commit `63fce13`)[cite: 1, 2] |
+| **Base Architecture** | `Llama-3.2-3B` (`llama` architecture, 3B parameters)[cite: 2] |
+| **Training Corpus** | 10,000 structured NCERT knowledge cards (Classes 6–12: Physics, Chemistry, Mathematics, Biology)[cite: 3] |
+| **Alignment / RL Method** | Group Relative Policy Optimization (GRPO) via Unsloth QLoRA[cite: 3] |
+| **Output Protocol** | Structured `<reasoning>...</reasoning>` derivation block followed by `<answer>...</answer>` |
+| **Training Hardware** | AMD Instinct MI300X (ROCm backend) |
+| **Serialized Artefact** | `NCERT_3B_v0.1.gguf` (`2.02 GB` single-file GGUF)[cite: 1] |
+| **Deployment Envelope** | 100% offline inference; validated for 3 GB–6 GB RAM Android and consumer hardware[cite: 3] |
 
-### 📂 Repository Contents
-* `PROCESS_ARCHITECTURE.md`: A deep dive into the ROCm setup, GRPO reward functions, and memory management.
-* `Training_Log.ipynb`: The raw Jupyter notebook proving the 30-hour fine-tuning process.
-* `NCERT_Brawler.html`: An accessible export of the loss metrics and quantization logs.
+---
 
-**Built for the Edge. Built for the Students.**
+## Training Methodology & Grounding Invariants
+
+Standard supervised fine-tuning on textbook question-answer pairs optimises surface token likelihood without verifying intermediate derivations. `NCERT_3B_v0.1` applies **Group Relative Policy Optimization (GRPO)** across 10,000 verified NCERT curriculum cards[cite: 3] under explicit structural and factual invariants:
+
+| Invariant / Stage | Mechanism | Failure Mode Prevented |
+| :--- | :--- | :--- |
+| **Structural Reasoning Gate** | Enforces `<reasoning>...</reasoning>` generation prior to emitting `<answer>...</answer>`. | Prevents direct heuristic guessing on multi-step Physics and Mathematics derivations. |
+| **Curriculum Grounding Reward** | Scores intermediate derivation steps and final numerical/symbolic outputs against verified NCERT Class 6–12 solutions[cite: 3]. | Suppresses ungrounded parametric drift outside CBSE/NCERT curriculum boundaries. |
+| **Offline GGUF Serialisation** | Compresses FP16 weights (~6.1 GB) into a `2.02 GB` GGUF binary (`NCERT_3B_v0.1.gguf`)[cite: 1]. | Eliminates network latency and fits within constrained mobile userspace memory limits. |
+
+---
+
+## Local Execution (`llama.cpp`)
+
+Download `NCERT_3B_v0.1.gguf` (`2.02 GB`) from [Hugging Face](https://huggingface.co/Erebus007/NCERT_3B_v0.1)[cite: 1, 2] and run offline inference via `llama-cli` or `llama-server`:
+
+```bash
+# CLI interactive / single-prompt inference
+./llama-cli \
+  -m NCERT_3B_v0.1.gguf \
+  -c 2048 \
+  --temp 0.2 \
+  -p "Derive the expression for the electric field on the axial line of an electric dipole."
